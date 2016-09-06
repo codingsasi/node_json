@@ -81,12 +81,12 @@ function node_json_page($key, $nid) {
   $site_api_key = variable_get('siteapikey', '');
   // If key mismatch or if site API key is not added in configuration, access will be denied.
   if ($site_api_key != $key || $site_api_key == '') {
-    $page = 'Access Denied!';
+    drupal_access_denied();
   }
   else {
     $node = node_load($nid);
     if ($node == NULL) {
-      $page = 'Access Denied!';
+      drupal_access_denied();
     }
     else {
       $page = $node;
