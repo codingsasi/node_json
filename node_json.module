@@ -15,7 +15,6 @@ function node_json_menu() {
     'page callback' => 'node_json_page',
     'page arguments' => array(1, 2),
     'access arguments' => array('access content'),
-    'access callback' => TRUE,
   );
   return $items;
 }
