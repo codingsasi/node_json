@@ -1,0 +1,98 @@
+<?php
+
+/**
+ * @file
+ * 
+ * The module file for Node JSON module.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function node_json_menu() {
+  $items = array();
+  $items['page_json/%/%'] = array(
+    'page callback' => 'node_json_page',
+    'page arguments' => array(1, 2),
+    'access arguments' => array('access content'),
+    'access callback' => TRUE,
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_form_alter().
+ * 
+ * Adds site api key field to site information form.
+ */
+function node_json_form_system_site_information_settings_alter(&$form, &$form_state) {
+  $form['site_api_key'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Site API Key'),
+  );
+  $siteapikey = variable_get('siteapikey', 'No API Key yet');
+  
+  $form['site_api_key']['siteapikey'] = array(
+    '#type' => 'textfield',
+    '#default_value' => ($siteapikey) ? $siteapikey : 'No API Key yet',
+    '#required' => FALSE,
+  );
+  // Validate and set messages.
+  $form['#validate'][] = 'node_json_settings_form_validate';
+  // Change button text to Update after site api key has been saved.
+  if ($siteapikey != 'No API Key yet' && $siteapikey != '') {
+    $form['actions']['submit'] = array('#type' => 'submit', '#value' => t('Update configuration'));
+  }
+  return $form;
+}
+
+/**
+ * Implements hook_form_validate().
+ * 
+ * Validates the site api key for spaces. They key will always be alphanumeric
+ * string with length greater than 5 but less than 25.
+ */
+function node_json_settings_form_validate($form, &$form_state) {
+  $new_site_api_key = trim($form_state['values']['siteapikey']);
+  // Check for alphanumeric of length > 5 characters. 
+  if (($form_state['values']['siteapikey'] != '' || $form_state['values']['siteapikey'] != 'No API Key yet') && preg_match('/^[a-zA-Z0-9]{6,50}$/', $new_site_api_key) == 1) {
+    drupal_set_message(t('Site API key has been set with the value :siteapikey', array(':siteapikey' => $new_site_api_key)));
+  }
+  // If left empty, set to default text.
+  elseif ($form_state['values']['siteapikey'] == '' || $form_state['values']['siteapikey'] == 'No API Key yet') {
+    $form_state['values']['siteapikey'] = 'No API Key yet';
+  }
+  else {
+    drupal_set_message(t('Site API key should be alphanumeric without spaces and length > 5 and < 25.'), 'error');
+    form_set_error('siteapikey');
+  }
+}
+
+/**
+ * The page function to display the node as json.
+ * 
+ * @param $key
+ *   The site API key.
+ * @param $nid
+ *   The node id of the node.
+ * @return $page
+ *   The node in JSON format.
+ */
+function node_json_page($key, $nid) {
+  $site_api_key = variable_get('siteapikey', '');
+  // If key mismatch or if site API key is not added in configuration, access will be denied.
+  if ($site_api_key != $key || $site_api_key == '') {
+    $page = 'Access Denied!';
+  }
+  else {
+    $node = node_load($nid);
+    if ($node == NULL) {
+      $page = 'Access Denied!';
+    }
+    else {
+      $page = $node;
+    }
+  }
+  $json = drupal_json_output($page);
+  return $json;
+}

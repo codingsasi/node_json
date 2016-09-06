@@ -1,0 +1,5 @@
+name = Node JSON
+description = Makes every node available in JSON format, if a site API key is provided.
+core = 7.x
+configure = admin/config/system/site-information
+package = API
